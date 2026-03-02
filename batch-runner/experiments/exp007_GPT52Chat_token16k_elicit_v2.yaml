@@ -1,16 +1,16 @@
 # Experiment Configuration
 # Elicit v2 — CONFIDENCE dual defense + defensive coding + timeout 720
 # Based on exp006 with:
-#   - CONFIDENCE suffix 강화 (L1 프롬프트 방어)
-#   - defensive coding 지시 위치 상단 이동
-#   - 코드 블록 단일화 지시 추가
-#   - lightweight checks 간소화 (토큰 절약)
-#   - 타임아웃 570 → 720초 일률 상향
+#   - CONFIDENCE suffix hardened (L1 prompt defense)
+#   - Defensive coding instruction moved to top of suffix
+#   - Single code block directive added
+#   - Lightweight checks simplified (token savings)
+#   - Timeout raised 570 → 720s (uniform, all tasks equal)
 # If condition_b is absent, automatically runs as Single Test
 
 experiment:
   id: "exp007_GPT52Chat_token16k_elicit_v2"
-  name: "GPT-5.2 Chat Elicit v2 + 16k Tokens — subprocess (Full 220 tasks)"
+  name: "GPT-5.2 Chat Elicit v2 — CONFIDENCE safety + timeout 720s (Full 220)"
   description: "Elicit v2: CONFIDENCE dual defense, defensive coding repositioned, single code block, lightweight checks simplified, timeout 720s. Based on exp006."
   author: "Hyeonsang Jeon"
   created_at: "2026-03-03"
