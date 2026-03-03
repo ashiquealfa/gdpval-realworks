@@ -63,5 +63,12 @@ user_prompt: |
   print("Generated Q3_Report.docx")
   ```
 
+  CONFIDENCE TAG:
+  On the VERY LAST LINE of your plain-text response
+  (OUTSIDE and AFTER all ```python``` code blocks), write exactly:
+  CONFIDENCE[XX]
+  where XX is an integer 0-100.
+  CONFIDENCE[XX] must NOT appear inside any code block or Python code.
+
   TASK:
   {task_prompt}

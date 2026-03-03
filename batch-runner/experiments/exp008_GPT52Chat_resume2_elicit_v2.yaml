@@ -1,0 +1,151 @@
+# Experiment Configuration
+# exp008 — exp007 + resume_max_rounds: 2
+# Isolates the effect of resume_max_rounds (1→2) on error recovery.
+# All other settings identical to exp007.
+# If condition_b is absent, automatically runs as Single Test
+
+experiment:
+  id: "exp008_GPT52Chat_resume2_elicit_v2"
+  name: "GPT-5.2 Chat Elicit v2 — resume_max_rounds 2 (Full 220)"
+  description: "Isolate resume_max_rounds effect: identical to exp007 except resume_max_rounds 1→2. Tests whether Round 2 recovers additional error tasks (exp003 achieved 95.9% with resume_max_rounds:2)."
+  author: "Hyeonsang Jeon"
+  created_at: "2026-03-03"
+
+# Variable control
+control:
+  fixed:
+    - model
+    - tasks
+    - temperature
+    - prompt_strategy
+  changed:
+    - resume_max_rounds
+
+# Data filter
+data:
+  source: "HyeonSang/exp008_GPT52Chat_resume2_elicit_v2"
+  filter:
+    sector: null
+    occupation: null
+    sample_size: null
+
+# Condition A: Elicit v2 (identical to exp007)
+condition_a:
+  name: "Elicit v2 16k + resume_rounds 2"
+  model:
+    provider: "azure"
+    deployment: "gpt-5.2-chat"
+    temperature: 0.0
+    seed: 42
+  prompt:
+    system: |
+      You are a helpful assistant that completes professional tasks.
+      When the task requires creating files (e.g., Excel, Word, PDF, PowerPoint),
+      write Python code that generates those files and save them to the current directory.
+      Use libraries such as openpyxl, python-docx, reportlab, python-pptx, and Pillow.
+      Always produce complete, runnable code.
+    prefix: null
+    body: null
+    suffix: |
+      If the task requires creating deliverable files (documents, spreadsheets,
+      presentations, reports, etc.), you MUST use Python code to generate the
+      actual file(s) and save them to the current directory.
+      Do NOT just describe what you would create — actually execute code to produce
+      downloadable files. The task is NOT complete unless the files are saved.
+
+      In your text response, do NOT include any file download links or sandbox URLs
+      (e.g. "[Download ...](sandbox:/mnt/data/...)" or similar).
+      Only provide a plain-text summary of what was produced.
+
+      IMPORTANT — Defensive coding:
+      Before writing any code, ALWAYS inspect the actual structure of any
+      reference files first (df.columns, df.dtypes, df.head()).
+      Never hardcode column names or assume data types.
+      Use the exact column names found in the file.
+
+      Special characters
+      - Never use the character ‑ (U+2011), since it will render poorly on some people's computers. Instead, always use - (U+002D) instead.
+      - Avoid emojis, nonstandard bullet points, and other special characters unless there is an extremely good reason to use them, since these render poorly on some people's computers.
+
+      Graphics embedded within PDFs/slides
+      - Make sure that any diagrams or plots are large enough to be legible (though not so large that they are ugly or cut off). In most cases they should be at least half the page width.
+      - Plots and charts to visualize data are good. Simple graphics (like a flowchart with arrows) are good. But complicated visuals constructed by overlaying shapes into an image often appear unprofessional.
+
+      PDFs
+      - Always use LibreOffice to create the PDF (it must be LibreOffice! If LibreOffice is not installed, you can install it yourself). Other libraries sometimes show weird artifacts on some computers.
+
+      Fonts
+      - Always use fonts which are available across all platforms. We recommend Noto Sans / Noto Serif unless there is an extremely good reason to use something else.
+      - If you must use another font, embed the font in the pptx/word/etc doc.
+
+      Deliverable text
+      - Do not link to submitted files in the deliverable text (links are not supported on the interface where these will be viewed).
+      - Ideal deliverable text is concise and to the point, without any unnecessary fluff. 4 sentences max.
+      - Any deliverables the user asked for should be in files in the container, NOT purely in the deliverable text.
+      - If a portion of the task was unsolvable (for instance, because internet was not available), mention this in the deliverable text.
+      - Your submission should be complete and self-contained. Even if you are unable to fully complete the task due to limitations in the environment, produce as close to a complete solution as possible.
+
+      Verbosity
+      - Always be clear and comprehensive, but avoid extra verbosity when possible.
+
+      Filetypes
+      - If the prompt does not request a specific filetype, use standard filetypes like PDF, PPTX, DOCX, XLSX, MP4, ZIP, etc.
+
+      Video files (mp4, mov)
+      - Extract a string of images from the video files and check the images to see whether the visual elements are corrupted.
+
+      Code structure:
+      Write all code in a SINGLE ```python``` code block.
+      Do not split code across multiple code blocks — this can cause
+      syntax errors when blocks are concatenated.
+
+      Lightweight mandatory checks
+      After generating files, do a quick validation pass (5 lines max):
+      - Verify each file exists and has non-zero size
+      - For Excel/DOCX/PPTX: open with the same library and confirm no exception
+      - Do NOT do multi-step visual inspection or PNG conversion
+      If any file is missing or corrupt, fix and regenerate.
+
+  # Self-QA: LLM inspects its own output
+  qa:
+    enabled: true
+    max_retries: 1              # max regeneration attempts on QA failure
+    model: null                 # null = same model as generation
+    min_score: 5                # scores below this fail QA (1-10)
+    prompt: |
+      You are a strict QA inspector for professional deliverables.
+
+      ## Original Task
+      {instruction}
+
+      ## Generated Output
+      - Text response: {deliverable_text}
+      - Files produced: {deliverable_files}
+
+      ## Inspection Criteria
+      1. Does the output address ALL requirements in the original task?
+      2. Are all required files produced with correct types and content?
+      3. Is the text response complete and professional?
+      4. Are there any obvious errors, missing elements, or placeholder content?
+
+      ## Response Format (JSON only)
+      ```json
+      {{
+        "passed": true,
+        "score": 8,
+        "issues": [],
+        "suggestion": ""
+      }}
+      ```
+
+# Execution settings
+execution:
+  mode: "subprocess"          # code_interpreter | subprocess | json_renderer
+  timeout: 720                 # 기존 570 → 720 (일률 상향, 12분)
+  install_libreoffice: true    # LibreOffice + Noto Sans 폰트 설치 (Elicit용)
+  tokens:
+    code_generation: 16384
+    qa_check: 4096
+    json_render: 8000
+  max_retries: 5               # infra retries per task (API errors, timeouts, Python execution errors)
+  resume_max_rounds: 2         # ★ exp007의 1에서 2로 변경 — 유일한 변경점

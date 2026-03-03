@@ -1,0 +1,118 @@
+# Experiment Configuration
+# exp009 — exp008 base + lightweight mode-neutral suffix
+# Combines resume_max_rounds: 2 with a dramatically shortened suffix:
+#   - 70줄 → ~25줄 (mode-neutral Elicit core)
+#   - Removed: CONFIDENCE instruction (pipeline _sanitize_code handles it)
+#   - Removed: SINGLE code block directive (pipeline _extract_code merges blocks)
+#   - Removed: mode-specific instructions (subprocess only vs code_interpreter)
+#   - Kept: environment info (LibreOffice, fonts), quality standards, data exploration
+# If condition_b is absent, automatically runs as Single Test
+
+experiment:
+  id: "exp009_GPT52Chat_lightweight_suffix_elicit"
+  name: "GPT-5.2 Chat Lightweight Suffix — mode-neutral Elicit (Full 220)"
+  description: "Lightweight mode-neutral suffix (~25 lines vs exp007's ~70 lines). Hypothesis: reduced cognitive load on LLM improves code generation quality. Combined with resume_max_rounds:2."
+  author: "Hyeonsang Jeon"
+  created_at: "2026-03-03"
+
+# Variable control
+control:
+  fixed:
+    - model
+    - tasks
+    - temperature
+    - resume_max_rounds
+  changed:
+    - prompt_strategy
+
+# Data filter
+data:
+  source: "HyeonSang/exp009_GPT52Chat_lightweight_suffix_elicit"
+  filter:
+    sector: null
+    occupation: null
+    sample_size: null
+
+# Condition A: Lightweight mode-neutral Elicit suffix
+condition_a:
+  name: "Lightweight Elicit"
+  model:
+    provider: "azure"
+    deployment: "gpt-5.2-chat"
+    temperature: 0.0
+    seed: 42
+  prompt:
+    system: |
+      You are a helpful assistant that completes professional tasks.
+      When the task requires creating files (e.g., Excel, Word, PDF, PowerPoint),
+      write Python code that generates those files and save them to the current directory.
+      Use libraries such as openpyxl, python-docx, reportlab, python-pptx, and Pillow.
+      Always produce complete, runnable code.
+    prefix: null
+    body: null
+    suffix: |
+      If the task requires creating deliverable files, write code to generate
+      actual files. Do NOT just describe — produce downloadable files.
+
+      Before writing code, ALWAYS inspect reference file structure first
+      (df.columns, df.dtypes, df.head()). Never hardcode column names.
+
+      Environment:
+      - LibreOffice is installed. Always use LibreOffice to create PDFs.
+      - Noto Sans / Noto Serif fonts are available. Use these unless
+        there is a specific reason for another font.
+      - If using another font, embed it in the document.
+
+      Quality standards:
+      - Avoid special characters like ‑ (U+2011) — use plain - (U+002D)
+      - Diagrams/plots: at least half page width, legible
+      - Prefer data visualizations over shape-overlay graphics
+      - Deliverable text: concise, 4 sentences max, no file links
+      - Submission should be complete and self-contained
+
+      After generating files, verify each exists and has non-zero size.
+      If any file is missing or corrupt, fix and regenerate.
+
+  # Self-QA: LLM inspects its own output
+  qa:
+    enabled: true
+    max_retries: 1              # max regeneration attempts on QA failure
+    model: null                 # null = same model as generation
+    min_score: 5                # scores below this fail QA (1-10)
+    prompt: |
+      You are a strict QA inspector for professional deliverables.
+
+      ## Original Task
+      {instruction}
+
+      ## Generated Output
+      - Text response: {deliverable_text}
+      - Files produced: {deliverable_files}
+
+      ## Inspection Criteria
+      1. Does the output address ALL requirements in the original task?
+      2. Are all required files produced with correct types and content?
+      3. Is the text response complete and professional?
+      4. Are there any obvious errors, missing elements, or placeholder content?
+
+      ## Response Format (JSON only)
+      ```json
+      {{
+        "passed": true,
+        "score": 8,
+        "issues": [],
+        "suggestion": ""
+      }}
+      ```
+
+# Execution settings
+execution:
+  mode: "subprocess"          # code_interpreter | subprocess | json_renderer
+  timeout: 720                 # 12분 (exp007과 동일)
+  install_libreoffice: true    # LibreOffice + Noto Sans 폰트 설치 (Elicit용)
+  tokens:
+    code_generation: 16384
+    qa_check: 4096
+    json_render: 8000
+  max_retries: 5               # infra retries per task (API errors, timeouts, Python execution errors)
+  resume_max_rounds: 2         # exp003과 동일 (라운드 2에서 에러 태스크 복구)
