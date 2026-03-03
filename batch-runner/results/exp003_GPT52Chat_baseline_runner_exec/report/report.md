@@ -9,6 +9,9 @@
 | **Date** | 2026-02-26 |
 | **Duration** | 149m 10s |
 | **Generated At** | 2026-02-26T19:03:29.382558+00:00 |
+| 🤗 HF Dataset | [exp003_GPT52Chat_baseline_runner_exec](https://huggingface.co/datasets/HyeonSang/exp003_GPT52Chat_baseline_runner_exec) |
+| 📊 Self-Report | [self_report.json](https://huggingface.co/datasets/HyeonSang/exp003_GPT52Chat_baseline_runner_exec/blob/main/self_report.json) |
+| 📊 Grading | ⏳ Awaiting (`scores.json`) |
 
 ## Execution Summary *(Self-Assessed, Pre-Grading)*
 

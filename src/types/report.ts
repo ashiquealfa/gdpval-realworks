@@ -143,8 +143,13 @@ export interface CrossExperimentAnalysis {
   sector_matrix: SectorMatrix
 }
 
+/**
+ * Lightweight index entry — task_results excluded (lazy-loaded from HuggingFace on detail page)
+ */
+export type ReportIndexEntry = Omit<ReportData, 'task_results'>
+
 export interface ReportsIndex {
-  reports: ReportData[]
+  reports: ReportIndexEntry[]
   cross_experiment: CrossExperimentAnalysis
   _generated: string
 }

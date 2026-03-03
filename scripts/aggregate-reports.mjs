@@ -10,6 +10,23 @@ import { join } from 'path';
 const ROOT = new URL('..', import.meta.url).pathname;
 const RESULTS_DIR = join(ROOT, 'batch-runner', 'results');
 const OUTPUT_DIR = join(ROOT, 'public', 'generated');
+const HF_USER = 'HyeonSang';
+
+/**
+ * Load a single report: try local report_data.json first, then HF self_report.json.
+ */
+async function fetchReportData(dirName, reportPath) {
+  try {
+    const content = await readFile(reportPath, 'utf-8');
+    return { data: JSON.parse(content), source: 'local' };
+  } catch {}
+
+  // Fallback: HuggingFace self_report.json
+  const hfUrl = `https://huggingface.co/datasets/${HF_USER}/${dirName}/resolve/main/self_report.json`;
+  const res = await fetch(hfUrl);
+  if (!res.ok) throw new Error(`local: not found, HF: HTTP ${res.status}`);
+  return { data: await res.json(), source: 'hf' };
+}
 
 // Extract short_id from directory name
 // exp003_GPT52Chat_baseline_runner_exec -> exp003
@@ -33,49 +50,14 @@ async function loadAllReports() {
     const reportPath = join(RESULTS_DIR, subdir.name, 'report', 'report_data.json');
 
     try {
-      const content = await readFile(reportPath, 'utf-8');
-      const data = JSON.parse(content);
-      data.short_id = shortId;
+      const { data, source } = await fetchReportData(subdir.name, reportPath);
+      if (source === 'hf') console.log(`  ↓ ${subdir.name}: fetched from HuggingFace`);
 
-      // Merge error_tasks into task_results with default values
-      if (data.error_tasks && data.error_tasks.length > 0) {
-        // Build a map of error messages by task_id
-        const errorMap = new Map();
-        for (const et of data.error_tasks) {
-          errorMap.set(et.task_id, et.error || null);
-        }
+      // Strip task_results — heavy per-task data is lazy-loaded from HuggingFace on the detail page
+      const { task_results: _ignored, ...indexEntry } = data;
+      indexEntry.short_id = shortId;
 
-        // Update existing task_results with error field
-        for (const task of (data.task_results || [])) {
-          if (errorMap.has(task.task_id)) {
-            task.error = errorMap.get(task.task_id);
-            errorMap.delete(task.task_id);
-          }
-        }
-
-        // Add remaining error_tasks that weren't in task_results
-        for (const et of data.error_tasks) {
-          if (errorMap.has(et.task_id)) {
-            data.task_results.push({
-              task_id: et.task_id,
-              sector: et.sector || 'Unknown',
-              occupation: et.occupation || 'Unknown',
-              status: 'error',
-              retried: false,
-              files_count: 0,
-              qa_score: null,
-              qa_passed: null,
-              qa_issues: [],
-              qa_suggestion: '',
-              deliverable_summary: '',
-              latency_ms: 0,
-              error: et.error || null,
-            });
-          }
-        }
-      }
-
-      reports.push(data);
+      reports.push(indexEntry);
     } catch (err) {
       errors.push(`${subdir.name}: ${err.message}`);
     }

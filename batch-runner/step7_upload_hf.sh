@@ -124,6 +124,7 @@ INCLUDE = [
     "README.md",
     "data/train-*.parquet",
     "deliverable_files/**",
+    "self_report.json",
 ]
 
 IGNORE = [

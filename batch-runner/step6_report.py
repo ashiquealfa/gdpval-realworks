@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -43,20 +44,13 @@ DEFAULT_OUTPUT_DIR = WORKSPACE_DIR / "report"
 
 
 def _find_result_json(default_path: Path) -> Path:
-    """Return result JSON path; auto-discover from results/ if default missing."""
+    """Return result JSON path; fail clearly if not found."""
     if default_path.exists():
         return default_path
 
-    # Auto-discover latest result JSON from results/ directory
-    results_root = _SCRIPT_DIR / "results"
-    candidates = sorted(results_root.glob("**/*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
-    if candidates:
-        found = candidates[0]
-        print(f"ℹ️  workspace/result.json not found — using: {found}")
-        return found
-
     print(f"❌ Result JSON not found at {default_path}")
-    print("   Run step3_format_results.sh first, or specify --result-json")
+    print("   Run step3_format_results.sh first (it writes workspace/result.json),")
+    print("   or specify --result-json path/to/result.json")
     sys.exit(1)
 
 
@@ -375,18 +369,24 @@ def _build_markdown(rd: dict) -> str:
     lines: list[str] = []
 
     # 1. Header
+    hf_user = "HyeonSang"
+    experiment_id = meta['experiment_id']
+    hf_base = f"https://huggingface.co/datasets/{hf_user}/{experiment_id}"
     lines += [
         f"# Experiment Report: {meta['experiment_name']}",
         "",
         f"| Field | Value |",
         f"|-------|-------|",
-        f"| **Experiment ID** | `{meta['experiment_id']}` |",
+        f"| **Experiment ID** | `{experiment_id}` |",
         f"| **Condition** | {meta['condition_name']} |",
         f"| **Model** | {meta['model']} |",
         f"| **Execution Mode** | {meta['execution_mode']} |",
         f"| **Date** | {meta['date']} |",
         f"| **Duration** | {meta['duration']} |",
         f"| **Generated At** | {rd['generated_at']} |",
+        f"| 🤗 HF Dataset | [{experiment_id}]({hf_base}) |",
+        f"| 📊 Self-Report | [self_report.json]({hf_base}/blob/main/self_report.json) |",
+        f"| 📊 Grading | ⏳ Awaiting (`scores.json`) |",
         "",
     ]
 
@@ -977,6 +977,13 @@ def generate_report(result_json_path: Path, output_dir: Path, no_narrative: bool
     # NOTE: report.html generation disabled — large HTML files skew GitHub language stats.
     # html_path = output_dir / "report.html"
     # html_path.write_text(_build_html(rd), encoding="utf-8")
+
+    # Copy report_data.json → workspace/upload/self_report.json (for step7 HF upload)
+    upload_dir = WORKSPACE_DIR / "upload"
+    if upload_dir.exists():
+        self_report_path = upload_dir / "self_report.json"
+        shutil.copy2(json_path, self_report_path)
+        print(f"   ✓ Copied self_report.json → {self_report_path}")
 
     print(f"\n✅ Step 6 complete:")
     print(f"   {json_path}")

@@ -203,6 +203,12 @@ def format_results():
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(final_json, f, indent=2, ensure_ascii=False, default=str)
 
+    # Also write to workspace/result.json so step6 reads it directly
+    workspace_result = WORKSPACE_DIR / "result.json"
+    WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
+    with open(workspace_result, "w", encoding="utf-8") as f:
+        json.dump(final_json, f, indent=2, ensure_ascii=False, default=str)
+
     # 5. Build Markdown report
     success_rate = round(summary["success"] / summary["total"] * 100) if summary["total"] else 0
     retried_count = len(retried_tasks)

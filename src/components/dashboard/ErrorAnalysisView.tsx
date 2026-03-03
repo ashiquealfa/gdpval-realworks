@@ -4,7 +4,7 @@ import { AlertCircle, Brain, FileWarning, RefreshCw, ChevronDown, ChevronUp } fr
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
-import type { ExperimentEntry, ReportData } from '../../types/report'
+import type { ExperimentEntry, ReportIndexEntry } from '../../types/report'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { parseTraceback } from '../../utils/tracebackParser'
@@ -15,7 +15,7 @@ import { tooltipTexts, sectionHintTexts } from '../../data/tooltipTexts'
 /* ─── props ─── */
 interface ErrorAnalysisViewProps {
   experiments: ExperimentEntry[]
-  reports: ReportData[]
+  reports: ReportIndexEntry[]
 }
 
 /* ─── constants ─── */

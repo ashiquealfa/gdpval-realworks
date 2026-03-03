@@ -36,6 +36,13 @@ batch-runner/local_repo/
 
 # Experiment report HTML (skews GitHub language stats)
 batch-runner/results/*/report/report.html
+
+# report_data.json은 HF Dataset에서 관리 (self_report.json)
+batch-runner/results/*/report/report_data.json
+
+# step3 intermediate artifacts — CI 산출물, git 불필요 (report/report.md는 유지)
+batch-runner/results/*/*.json
+batch-runner/results/*/*.md
 *.parquet
 .huggingface/
 .cache/

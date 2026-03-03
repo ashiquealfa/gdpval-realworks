@@ -166,6 +166,17 @@ function ExperimentDetail() {
             </div>
             <p className="text-xs text-dash-text-muted mt-0.5 truncate max-w-[150px] md:max-w-none">{meta?.experiment_name}</p>
           </div>
+          {meta?.experiment_id && (
+            <a
+              href={`https://huggingface.co/datasets/HyeonSang/${meta.experiment_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-[10px] text-dash-text-muted hover:text-dash-heading bg-dash-card-hover border border-dash-border rounded-lg px-2.5 py-1.5 transition-all hover:border-dash-text-muted hidden md:inline-flex"
+              title="View experiment dataset on HuggingFace"
+            >
+              🤗 HF Dataset
+            </a>
+          )}
           <button
             onClick={toggleTheme}
             className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-dash-border bg-dash-card hover:bg-dash-card-hover text-dash-text-secondary hover:text-dash-heading transition-all"
@@ -227,6 +238,116 @@ function ExperimentDetail() {
           ))}
         </motion.div>
 
+        {/* ── Execution Summary ── */}
+        {report.narrative?.overview && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.05 }}
+            className="bg-dash-card border border-dash-border rounded-xl p-4 md:p-5 mb-6"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="text-sm font-semibold text-dash-heading">Execution Summary</h3>
+              <ScopeBadge scope={meta?.report_scope ?? 'self_assessed_pre_grading'} />
+            </div>
+            <p className="text-xs text-dash-text-secondary leading-relaxed whitespace-pre-line">
+              {report.narrative.overview}
+            </p>
+          </motion.div>
+        )}
+
+        {/* ── Key Metrics (Extended) ── */}
+        {summary && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.08 }}
+            className="bg-dash-card border border-dash-border rounded-xl overflow-hidden mb-6"
+          >
+            <div className="px-4 py-3 border-b border-dash-border">
+              <h3 className="text-sm font-semibold text-dash-heading">Key Metrics</h3>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                {[
+                  { label: 'Total Tasks', value: summary.total_tasks },
+                  { label: 'Success', value: `${summary.success_count} (${summary.success_rate_pct}%)` },
+                  { label: 'Errors', value: summary.error_count },
+                  { label: 'Retried Tasks', value: summary.retried_count },
+                  { label: 'Avg QA Score', value: `${summary.avg_qa_score}/10` },
+                  { label: 'Min QA Score', value: `${summary.min_qa_score}/10` },
+                  { label: 'Max QA Score', value: `${summary.max_qa_score}/10` },
+                  { label: 'Avg Latency', value: `${(summary.avg_latency_ms / 1000).toFixed(1)}s` },
+                  { label: 'Max Latency', value: `${(summary.max_latency_ms / 1000).toFixed(1)}s` },
+                  { label: 'Total LLM Time', value: `${(summary.total_latency_ms / 1000).toFixed(0)}s` },
+                ].map((m, i) => (
+                  <div key={i}>
+                    <div className="text-[10px] text-dash-text-muted uppercase mb-0.5">{m.label}</div>
+                    <div className="text-dash-text font-mono font-semibold">{m.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── File Generation & Resume Rounds ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {report.file_generation && report.file_generation.needs_files_total != null && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="bg-dash-card border border-dash-border rounded-xl p-4"
+            >
+              <h3 className="text-sm font-semibold text-dash-heading mb-3">File Generation</h3>
+              <div className="space-y-2 text-xs">
+                {[
+                  { label: 'Tasks requiring files', value: report.file_generation.needs_files_total },
+                  { label: 'Successfully generated', value: `${report.file_generation.files_succeeded} (${report.file_generation.needs_files_total > 0 ? ((report.file_generation.files_succeeded / report.file_generation.needs_files_total) * 100).toFixed(1) : 0}%)` },
+                  { label: 'Failed → dummy created', value: report.file_generation.files_failed },
+                ].map((row, i) => (
+                  <div key={i} className="flex justify-between py-1 border-b border-dash-border-subtle last:border-0">
+                    <span className="text-dash-text-secondary">{row.label}</span>
+                    <span className="text-dash-text font-mono font-semibold">{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+          {report.recovery_stats?.resume_rounds?.per_round &&
+            Object.keys(report.recovery_stats.resume_rounds.per_round).length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.12 }}
+              className="bg-dash-card border border-dash-border rounded-xl p-4"
+            >
+              <h3 className="text-sm font-semibold text-dash-heading mb-3">Resume Rounds</h3>
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-[10px] text-dash-text-muted uppercase border-b border-dash-border">
+                    <th className="py-1.5 text-left">Round</th>
+                    <th className="py-1.5 text-right">Attempted</th>
+                    <th className="py-1.5 text-right">Recovered</th>
+                    <th className="py-1.5 text-right">Still Failed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(report.recovery_stats.resume_rounds.per_round).map(([round, data]) => (
+                    <tr key={round} className="border-b border-dash-border-subtle last:border-0">
+                      <td className="py-1.5 text-dash-text font-mono">{round}</td>
+                      <td className="py-1.5 text-right text-dash-text-secondary font-mono">{data.attempted}</td>
+                      <td className="py-1.5 text-right font-mono text-emerald-400">{data.recovered}</td>
+                      <td className="py-1.5 text-right font-mono text-red-400">{data.still_failed}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </motion.div>
+          )}
+        </div>
+
         {/* Charts */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -262,6 +383,87 @@ function ExperimentDetail() {
             </ResponsiveContainer>
           </div>
         </motion.div>
+
+        {/* ── Sector Breakdown Table ── */}
+        {report.sector_breakdown && report.sector_breakdown.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+            className="bg-dash-card border border-dash-border rounded-xl overflow-hidden mb-6"
+          >
+            <div className="px-4 py-3 border-b border-dash-border">
+              <h3 className="text-sm font-semibold text-dash-heading">Sector Breakdown</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-[10px] text-dash-text-muted uppercase border-b border-dash-border">
+                    <th className="px-4 py-2 text-left">Sector</th>
+                    <th className="px-3 py-2 text-right">Tasks</th>
+                    <th className="px-3 py-2 text-right">Success</th>
+                    <th className="px-3 py-2 text-right">Success%</th>
+                    <th className="px-3 py-2 text-right">Avg QA</th>
+                    <th className="px-3 py-2 text-right">Avg Latency</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {report.sector_breakdown.map((s) => (
+                    <tr key={s.sector} className="border-b border-dash-border-subtle last:border-0 hover:bg-dash-card-hover transition">
+                      <td className="px-4 py-2 text-dash-text">{s.sector}</td>
+                      <td className="px-3 py-2 text-right font-mono text-dash-text-secondary">{s.total}</td>
+                      <td className="px-3 py-2 text-right font-mono text-dash-text-secondary">{s.success}</td>
+                      <td className="px-3 py-2 text-right font-mono" style={{ color: rateColor(s.success_rate_pct) }}>
+                        {s.success_rate_pct.toFixed(1)}%
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono" style={{ color: qaColor(s.avg_qa_score) }}>
+                        {s.avg_qa_score.toFixed(1)}/10
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono text-dash-text-muted">
+                        {(s.avg_latency_ms / 1000).toFixed(1)}s
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── Analysis Narratives ── */}
+        {(report.narrative?.quality_analysis || report.narrative?.failure_patterns || report.narrative?.recommendations) && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.18 }}
+            className="space-y-4 mb-8"
+          >
+            {report.narrative.quality_analysis && (
+              <div className="bg-dash-card border border-dash-border rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-dash-heading mb-2">Quality Analysis</h3>
+                <p className="text-xs text-dash-text-secondary leading-relaxed whitespace-pre-line">
+                  {report.narrative.quality_analysis}
+                </p>
+              </div>
+            )}
+            {report.narrative.failure_patterns && (
+              <div className="bg-dash-card border border-dash-border rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-dash-heading mb-2">Failure Patterns</h3>
+                <p className="text-xs text-dash-text-secondary leading-relaxed whitespace-pre-line">
+                  {report.narrative.failure_patterns}
+                </p>
+              </div>
+            )}
+            {report.narrative.recommendations && (
+              <div className="bg-dash-card border border-dash-border rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-dash-heading mb-2">Recommendations</h3>
+                <p className="text-xs text-dash-text-secondary leading-relaxed whitespace-pre-line">
+                  {report.narrative.recommendations}
+                </p>
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* Task Table */}
         <motion.div
