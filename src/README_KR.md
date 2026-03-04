@@ -5,59 +5,23 @@
 
 ---
 
-## 이게 뭐야?
+## 개요
 
-**220개 실무 전문가 태스크** (11개 산업, 55개 직종)에 대한 LLM 실험 결과를 시각화하는 React 대시보드입니다. 프롬프트 전략 비교, 섹터별 성능 추적, 개별 태스크 결과 드릴다운 — 백엔드 서버 없이 모두 가능합니다.
+**220개 실무 전문가 태스크** (11개 산업, 55개 직종)에 대한 LLM 실험 결과를 시각화하는 React 대시보드입니다. 프롬프트 전략 비교, 섹터별 성능 추적, 개별 태스크 결과 드릴다운까지 — 백엔드 서버 없이 모두 가능합니다.
 
 - **정적 JSON** 빌드 시 생성 → 런타임 API 호출 없음
 - **GitHub Pages** 자동 배포 (`main` 푸시 시)
-- **HuggingFace** 에서 태스크별 데이터 지연 로딩 (실험 상세 페이지)
+- **HuggingFace** 태스크별 데이터 지연 로딩 (실험 상세 페이지)
 
 ---
 
 ## 데이터 흐름
 
-```mermaid
-flowchart TD
-    subgraph 원본["원본 데이터"]
-        R["batch-runner/results — report_data.json"]
-        E["batch-runner/experiments — YAML 설정"]
-        P["batch-runner/prompts — 프롬프트 템플릿"]
-        G["data/grades — 외부 채점 결과"]
-    end
+<p align="center">
+  <img src="https://mermaid.ink/img/Zmxvd2NoYXJ0IFRECiAgICBzdWJncmFwaCBTMV9bIlNvdXJjZXMiXQogICAgICAgIFJbInJlc3VsdHMvcmVwb3J0X2RhdGEuanNvbiJdCiAgICAgICAgRVsiZXhwZXJpbWVudHMvKi55YW1sIl0KICAgICAgICBQWyJwcm9tcHRzLyoueWFtbCJdCiAgICAgICAgR1siZGF0YS9ncmFkZXMvKi5qc29uIl0KICAgIGVuZAogICAgc3ViZ3JhcGggUzJfWyJucG0gcnVuIGFnZ3JlZ2F0ZSJdCiAgICAgICAgQTFbImFnZ3JlZ2F0ZS1yZXBvcnRzLm1qcyJdCiAgICAgICAgQTJbImFnZ3JlZ2F0ZS1ncmFkZXMubWpzIl0KICAgICAgICBBM1siYWdncmVnYXRlLWV4cGVyaW1lbnRzLm1qcyJdCiAgICBlbmQKICAgIHN1YmdyYXBoIFMzX1sicHVibGljL2dlbmVyYXRlZC8iXQogICAgICAgIEoxWyJyZXBvcnRzLWluZGV4Lmpzb24iXQogICAgICAgIEoyWyJncmFkZXMtaW5kZXguanNvbiJdCiAgICAgICAgSjNbInByb21wdC1hcmNoaXRlY3R1cmUuanNvbiJdCiAgICBlbmQKICAgIHN1YmdyYXBoIFM0X1siUmVhY3QgSG9va3MiXQogICAgICAgIEgxWyJ1c2VSZXBvcnRzIl0KICAgICAgICBIMlsidXNlR3JhZGVzIl0KICAgICAgICBIM1sidXNlRXhwZXJpbWVudFByb21wdCJdCiAgICBlbmQKICAgIHN1YmdyYXBoIFM1X1siRGFzaGJvYXJkIl0KICAgICAgICBEWyJEYXNoYm9hcmQudHN4Il0KICAgICAgICBYWyJFeHBlcmltZW50RGV0YWlsLnRzeCJdCiAgICBlbmQKICAgIFIgJiBFIC0tPiBBMSAtLT4gSjEKICAgIEcgLS0-IEEyIC0tPiBKMgogICAgRSAmIFAgLS0-IEEzIC0tPiBKMwogICAgSjEgLS0-IEgxIC0tPiBEICYgWAogICAgSjIgLS0-IEgyIC0tPiBECiAgICBKMyAtLT4gSDMgLS0-IFg=" alt="데이터 흐름" width="700" />
+</p>
 
-    subgraph 빌드["npm run aggregate · 빌드 시점"]
-        S1["aggregate-reports.mjs"]
-        S2["aggregate-grades.mjs"]
-        S3["aggregate-experiments.mjs"]
-    end
-
-    subgraph 생성["public/generated/"]
-        J1["reports-index.json"]
-        J2["grades-index.json"]
-        J3["prompt-architecture.json"]
-    end
-
-    subgraph 훅["React Hooks"]
-        H1["useReports"]
-        H2["useGrades"]
-        H3["useExperimentPrompt"]
-    end
-
-    subgraph 화면["대시보드 페이지"]
-        D["Dashboard.tsx — 탭"]
-        X["ExperimentDetail.tsx — 드릴다운"]
-    end
-
-    R & E --> S1 --> J1
-    G --> S2 --> J2
-    E & P --> S3 --> J3
-    J1 --> H1 --> D & X
-    J2 --> H2 --> D
-    J3 --> H3 --> X
-```
-
-> 태스크별 상세 데이터(실험당 220행)는 번들에 **포함되지 않습니다** — 실험 상세 페이지를 열 때 HuggingFace에서 요청합니다.
+> 태스크별 상세 데이터(실험당 220행)는 번들에 **포함되지 않습니다** — 실험 상세 페이지를 열 때 HuggingFace에서 온디맨드로 가져옵니다.
 
 ---
 

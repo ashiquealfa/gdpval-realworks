@@ -17,45 +17,9 @@ A React dashboard that visualizes LLM experiment results on **220 real-world exp
 
 ## Data Flow
 
-```mermaid
-flowchart TD
-    subgraph Sources
-        R["batch-runner/results — report_data.json"]
-        E["batch-runner/experiments — YAML configs"]
-        P["batch-runner/prompts — prompt templates"]
-        G["data/grades — external grading"]
-    end
-
-    subgraph Build["npm run aggregate · build-time"]
-        S1["aggregate-reports.mjs"]
-        S2["aggregate-grades.mjs"]
-        S3["aggregate-experiments.mjs"]
-    end
-
-    subgraph Generated["public/generated/"]
-        J1["reports-index.json"]
-        J2["grades-index.json"]
-        J3["prompt-architecture.json"]
-    end
-
-    subgraph Hooks["React Hooks"]
-        H1["useReports"]
-        H2["useGrades"]
-        H3["useExperimentPrompt"]
-    end
-
-    subgraph UI["Dashboard Pages"]
-        D["Dashboard.tsx — tabs"]
-        X["ExperimentDetail.tsx — drill-down"]
-    end
-
-    R & E --> S1 --> J1
-    G --> S2 --> J2
-    E & P --> S3 --> J3
-    J1 --> H1 --> D & X
-    J2 --> H2 --> D
-    J3 --> H3 --> X
-```
+<p align="center">
+  <img src="https://mermaid.ink/img/Zmxvd2NoYXJ0IFRECiAgICBzdWJncmFwaCBTMV9bIlNvdXJjZXMiXQogICAgICAgIFJbInJlc3VsdHMvcmVwb3J0X2RhdGEuanNvbiJdCiAgICAgICAgRVsiZXhwZXJpbWVudHMvKi55YW1sIl0KICAgICAgICBQWyJwcm9tcHRzLyoueWFtbCJdCiAgICAgICAgR1siZGF0YS9ncmFkZXMvKi5qc29uIl0KICAgIGVuZAogICAgc3ViZ3JhcGggUzJfWyJucG0gcnVuIGFnZ3JlZ2F0ZSJdCiAgICAgICAgQTFbImFnZ3JlZ2F0ZS1yZXBvcnRzLm1qcyJdCiAgICAgICAgQTJbImFnZ3JlZ2F0ZS1ncmFkZXMubWpzIl0KICAgICAgICBBM1siYWdncmVnYXRlLWV4cGVyaW1lbnRzLm1qcyJdCiAgICBlbmQKICAgIHN1YmdyYXBoIFMzX1sicHVibGljL2dlbmVyYXRlZC8iXQogICAgICAgIEoxWyJyZXBvcnRzLWluZGV4Lmpzb24iXQogICAgICAgIEoyWyJncmFkZXMtaW5kZXguanNvbiJdCiAgICAgICAgSjNbInByb21wdC1hcmNoaXRlY3R1cmUuanNvbiJdCiAgICBlbmQKICAgIHN1YmdyYXBoIFM0X1siUmVhY3QgSG9va3MiXQogICAgICAgIEgxWyJ1c2VSZXBvcnRzIl0KICAgICAgICBIMlsidXNlR3JhZGVzIl0KICAgICAgICBIM1sidXNlRXhwZXJpbWVudFByb21wdCJdCiAgICBlbmQKICAgIHN1YmdyYXBoIFM1X1siRGFzaGJvYXJkIl0KICAgICAgICBEWyJEYXNoYm9hcmQudHN4Il0KICAgICAgICBYWyJFeHBlcmltZW50RGV0YWlsLnRzeCJdCiAgICBlbmQKICAgIFIgJiBFIC0tPiBBMSAtLT4gSjEKICAgIEcgLS0-IEEyIC0tPiBKMgogICAgRSAmIFAgLS0-IEEzIC0tPiBKMwogICAgSjEgLS0-IEgxIC0tPiBEICYgWAogICAgSjIgLS0-IEgyIC0tPiBECiAgICBKMyAtLT4gSDMgLS0-IFg=" alt="Data Flow" width="700" />
+</p>
 
 > Task-level data (220 rows per experiment) is **not** bundled — it is fetched from HuggingFace on demand when you open an experiment detail page.
 

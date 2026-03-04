@@ -245,6 +245,10 @@ Self-QA checks: Are all requirements met? Are files actually produced? Is the ou
 
 Interactive experiment analytics — leaderboard, sector heatmaps, error analysis, prompt architecture viewer.
 
+<p align="center">
+  <img src="docs/images/dashboard-leaderboard.png" alt="Leaderboard — KPI cards, experiment rankings, sector heatmap" width="720" />
+</p>
+
 | Feature | Description |
 |---------|-------------|
 | **Leaderboard** | Ranked experiments with strategy, success rate, QA scores |
