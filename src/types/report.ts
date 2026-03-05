@@ -20,6 +20,10 @@ export interface TaskResult {
   error?: string
   grading_score?: number | null
   grading_feedback?: string | null
+  // task context fields (for detail modal)
+  instruction?: string
+  reference_file_urls?: string[]
+  deliverable_files?: string[]
 }
 
 export interface SectorBreakdown {

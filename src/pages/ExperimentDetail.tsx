@@ -9,7 +9,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
 } from 'recharts'
-import { useReport } from '../hooks/useReports'
+import { useReport, HF_BASE } from '../hooks/useReports'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useTheme } from '../contexts/ThemeContext'
 import ScopeBadge from '../components/ScopeBadge'
@@ -59,6 +59,7 @@ function ExperimentDetail() {
   const [sortKey, setSortKey] = useState<SortKey>('sector')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [showPromptArch, setShowPromptArch] = useState(false)
+  const [qaScoreFilter, setQaScoreFilter] = useState<number | 'all'>('all')
   const { prompt: promptArch, description: expDescription } = useExperimentPrompt(id)
 
   // ── Derived data ──
@@ -82,6 +83,9 @@ function ExperimentDetail() {
     }
     if (sectorFilter !== 'all') tasks = tasks.filter((t) => t.sector === sectorFilter)
     if (statusFilter !== 'all') tasks = tasks.filter((t) => t.status === statusFilter)
+    if (qaScoreFilter !== 'all') {
+      tasks = tasks.filter((t) => t.qa_score != null && t.qa_score <= qaScoreFilter)
+    }
     tasks = [...tasks].sort((a, b) => {
       const av =
         sortKey === 'qa_score'
@@ -100,7 +104,7 @@ function ExperimentDetail() {
       return 0
     })
     return tasks
-  }, [report, searchTerm, sectorFilter, statusFilter, sortKey, sortDir])
+  }, [report, searchTerm, sectorFilter, statusFilter, qaScoreFilter, sortKey, sortDir])
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
@@ -175,7 +179,7 @@ function ExperimentDetail() {
           </div>
           {meta?.experiment_id && (
             <a
-              href={`https://huggingface.co/datasets/HyeonSang/${meta.experiment_id}`}
+              href={`${HF_BASE}/${meta.experiment_id}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-[10px] text-dash-text-muted hover:text-dash-heading bg-dash-card-hover border border-dash-border rounded-lg px-2.5 py-1.5 transition-all hover:border-dash-text-muted hidden md:inline-flex"
@@ -566,6 +570,18 @@ function ExperimentDetail() {
                 <option value="success">Success</option>
                 <option value="error">Error</option>
               </select>
+              {/* QA Score filter */}
+              <select
+                value={qaScoreFilter}
+                onChange={(e) => setQaScoreFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                className="bg-dash-card-hover border border-dash-border rounded-lg px-2 py-1.5 text-xs text-dash-text"
+              >
+                <option value="all">All QA Scores</option>
+                <option value="3">QA ≤ 3 (Critical)</option>
+                <option value="5">QA ≤ 5 (Below Pass)</option>
+                <option value="7">QA ≤ 7 (Needs Work)</option>
+                <option value="10">QA ≤ 10 (All Scored)</option>
+              </select>
             </div>
           </div>
 
@@ -644,14 +660,15 @@ function ExperimentDetail() {
 
         {/* Task Detail Modal */}
         <AnimatePresence>
-          {selectedTask && <TaskDetailModal task={selectedTask} onClose={() => setSelectedTask(null)} />}
+          {selectedTask && <TaskDetailModal task={selectedTask} experimentId={meta?.experiment_id} onClose={() => setSelectedTask(null)} />}
         </AnimatePresence>
       </div>
     </motion.div>
   )
 }
 
-function TaskDetailModal({ task, onClose }: { task: TaskResult; onClose: () => void }) {
+function TaskDetailModal({ task, experimentId, onClose }: { task: TaskResult; experimentId?: string; onClose: () => void }) {
+  const [showPrompt, setShowPrompt] = useState(false)
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -759,6 +776,76 @@ function TaskDetailModal({ task, onClose }: { task: TaskResult; onClose: () => v
             <div>
               <div className="text-[10px] text-dash-text-muted uppercase mb-1">Deliverable Summary</div>
               <p className="text-xs text-dash-text-secondary">{task.deliverable_summary}</p>
+            </div>
+          )}
+
+          {/* Task Prompt (Collapsible) */}
+          {task.instruction && (
+            <div>
+              <button
+                onClick={() => setShowPrompt(!showPrompt)}
+                className="text-[10px] text-dash-text-muted uppercase flex items-center gap-1 hover:text-dash-text-secondary transition"
+              >
+                {showPrompt ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                Task Prompt
+              </button>
+              {showPrompt && (
+                <div className="mt-1.5 max-h-48 overflow-y-auto bg-dash-card-hover rounded-lg p-3">
+                  <p className="text-xs text-dash-text-secondary whitespace-pre-wrap leading-relaxed">
+                    {task.instruction}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Reference Files */}
+          {task.reference_file_urls && task.reference_file_urls.length > 0 && (
+            <div>
+              <div className="text-[10px] text-dash-text-muted uppercase mb-1.5">
+                📎 Reference Files ({task.reference_file_urls.length})
+              </div>
+              <div className="space-y-1">
+                {task.reference_file_urls.map((url, i) => (
+                  <a
+                    key={i}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between text-xs text-blue-400 hover:text-blue-300 bg-dash-card-hover rounded px-2 py-1.5 transition"
+                  >
+                    <span className="truncate">{decodeURIComponent(url.split('/').pop() || '')}</span>
+                    <span className="text-[10px] ml-2 shrink-0">↗ Open</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Deliverable Files */}
+          {task.deliverable_files && task.deliverable_files.length > 0 && experimentId && (
+            <div>
+              <div className="text-[10px] text-dash-text-muted uppercase mb-1.5">
+                📦 Deliverable Files ({task.deliverable_files.length})
+              </div>
+              <div className="space-y-1">
+                {task.deliverable_files.map((relPath, i) => {
+                  const hfUrl = `${HF_BASE}/${experimentId}/resolve/main/${relPath}`
+                  const filename = relPath.split('/').pop() || relPath
+                  return (
+                    <a
+                      key={i}
+                      href={hfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between text-xs text-emerald-400 hover:text-emerald-300 bg-dash-card-hover rounded px-2 py-1.5 transition"
+                    >
+                      <span className="truncate">{filename}</span>
+                      <span className="text-[10px] ml-2 shrink-0">↓ Open</span>
+                    </a>
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>

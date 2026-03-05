@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { ReportData, ReportIndexEntry, ReportsIndex, ExperimentEntry, SectorMatrix } from '../types/report'
 
-const HF_BASE = 'https://huggingface.co/datasets/HyeonSang'
+export const HF_BASE = 'https://huggingface.co/datasets/HyeonSang'
 
 /**
  * Fetch all reports (lightweight index — no task_results) from the aggregated index.

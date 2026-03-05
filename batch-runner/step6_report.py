@@ -125,6 +125,10 @@ def _build_task_results(data: dict) -> tuple[list[dict], list[dict]]:
             "qa_suggestion": r.get("qa_suggestion", ""),
             "latency_ms": r.get("latency_ms", 0),
             "deliverable_summary": (r.get("deliverable_text") or "")[:300],
+            # task context fields (for detail modal)
+            "instruction": (r.get("instruction") or "")[:2000],
+            "reference_file_urls": r.get("reference_file_urls", []),
+            "deliverable_files": r.get("deliverable_files", []),
         })
         if r.get("error"):
             error_tasks.append({

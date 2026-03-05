@@ -136,6 +136,8 @@ def format_results():
             "sector": task_meta.get("sector", ""),
             "occupation": task_meta.get("occupation", ""),
             "needs_files": task_meta.get("needs_files", False),
+            "instruction": task_meta.get("instruction", ""),
+            "reference_file_urls": task_meta.get("reference_file_urls", []),
             # execution
             "status": r["status"],
             "retried": retried,
