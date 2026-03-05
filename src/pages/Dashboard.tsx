@@ -156,6 +156,15 @@ export default function Dashboard() {
         >
           {[
             {
+              label: 'Best Self-QA',
+              value: bestQA.toFixed(2),
+              unit: 'out of 10',
+              tooltip: tooltipTexts.kpi.bestQaScore,
+              valueColor: 'text-amber-400',
+              accentColor: '#f59e0b',
+              tooltipDir: 'right' as const,
+            },
+            {
               label: 'Best Success Rate',
               value: `${bestRate.toFixed(1)}%`,
               unit: 'of 220 tasks',
@@ -180,15 +189,6 @@ export default function Dashboard() {
               tooltip: tooltipTexts.kpi.tasksEvaluated,
               valueColor: 'text-dash-heading',
               accentColor: '#8b5cf6',
-              tooltipDir: 'right' as const,
-            },
-            {
-              label: 'Best QA Score',
-              value: bestQA.toFixed(2),
-              unit: 'out of 10',
-              tooltip: tooltipTexts.kpi.bestQaScore,
-              valueColor: 'text-amber-400',
-              accentColor: '#f59e0b',
               tooltipDir: 'left' as const,
             },
           ].map((kpi, idx) => (

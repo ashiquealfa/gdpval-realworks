@@ -7,7 +7,7 @@ export const tooltipTexts = {
     tasksEvaluated:
       'Number of real-world professional tasks per experiment. Covers 11 industry sectors and 44 occupations from the GDPVal Gold Subset.',
     bestQaScore:
-      'Highest average QA score (0–10) across experiments. Self-assessed by the LLM based on completeness, accuracy, and format criteria.',
+      'Highest average Self-QA score (0–10) across experiments. The LLM inspects its own output after each task and scores it on completeness, accuracy, and format. This is a self-assessed quality measure, not an external grade.',
   },
   leaderboard: {
     experiment:

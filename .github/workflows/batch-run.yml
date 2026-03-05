@@ -137,7 +137,7 @@ jobs:
       - name: Install LibreOffice & Noto Sans fonts
         if: steps.read_config.outputs.install_libreoffice == 'True'
         run: |
-          echo "📦 Installing LibreOffice (headless) + Noto Sans fonts..."
+          echo "📦 Installing LibreOffice (headless) + Noto Sans fonts + system deps..."
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
             libreoffice-core \
@@ -145,14 +145,29 @@ jobs:
             libreoffice-impress \
             libreoffice-writer \
             fonts-noto-core \
-            fonts-noto-cjk
+            fonts-noto-cjk \
+            ffmpeg \
+            libsndfile1 \
+            tesseract-ocr \
+            poppler-utils \
+            wkhtmltopdf \
+            ghostscript \
+            graphviz libgraphviz-dev \
+            libzbar0 \
+            libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
+            libgdk-pixbuf-2.0-0 libffi-dev \
+            libgl1 libglib2.0-0
           fc-cache -fv
           echo "✅ LibreOffice version:"
           libreoffice --version
           echo "✅ Noto Sans available:"
           fc-list | grep -i "Noto Sans" | head -5
-          echo "✅ ffmpeg (pre-installed):"
+          echo "✅ ffmpeg:"
           ffmpeg -version 2>&1 | head -1
+          echo "✅ tesseract:"
+          tesseract --version 2>&1 | head -1
+          echo "✅ graphviz:"
+          dot -V 2>&1
 
       # ── Relay: Restore checkpoint from previous run ──
       - name: 'Restore checkpoint (relay run)'

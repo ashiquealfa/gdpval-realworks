@@ -21,20 +21,23 @@ export interface PromptArchitecture {
   }
 }
 
-interface Entry { exp_id: string; short_id: string; prompt_architecture: PromptArchitecture }
+interface Entry { exp_id: string; short_id: string; description: string; prompt_architecture: PromptArchitecture }
 interface Index { experiments: Entry[]; _generated: string }
 
 let cached: Index | null = null
 
 export function useExperimentPrompt(shortId: string | undefined) {
   const [prompt, setPrompt] = useState<PromptArchitecture | null>(null)
+  const [description, setDescription] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!shortId) { setLoading(false); return }
     if (cached) {
-      setPrompt(cached.experiments.find(e => e.short_id === shortId)?.prompt_architecture ?? null)
+      const entry = cached.experiments.find(e => e.short_id === shortId)
+      setPrompt(entry?.prompt_architecture ?? null)
+      setDescription(entry?.description ?? '')
       setLoading(false)
       return
     }
@@ -42,11 +45,13 @@ export function useExperimentPrompt(shortId: string | undefined) {
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() as Promise<Index> })
       .then(data => {
         cached = data
-        setPrompt(data.experiments.find(e => e.short_id === shortId)?.prompt_architecture ?? null)
+        const entry = data.experiments.find(e => e.short_id === shortId)
+        setPrompt(entry?.prompt_architecture ?? null)
+        setDescription(entry?.description ?? '')
         setLoading(false)
       })
       .catch(err => { setError(err.message); setLoading(false) })
   }, [shortId])
 
-  return { prompt, loading, error }
+  return { prompt, description, loading, error }
 }

@@ -37,6 +37,7 @@ async function main() {
       exp_id: expData.experiment?.id || file.replace('.yaml', ''),
       short_id: shortId,
       experiment_name: expData.experiment?.name || '',
+      description: expData.experiment?.description || '',
       created_at: expData.experiment?.created_at || '',
       prompt_architecture: {
         system: {

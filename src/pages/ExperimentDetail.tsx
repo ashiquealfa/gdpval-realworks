@@ -59,7 +59,7 @@ function ExperimentDetail() {
   const [sortKey, setSortKey] = useState<SortKey>('sector')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [showPromptArch, setShowPromptArch] = useState(false)
-  const { prompt: promptArch } = useExperimentPrompt(id)
+  const { prompt: promptArch, description: expDescription } = useExperimentPrompt(id)
 
   // ── Derived data ──
   const meta = report?.meta
@@ -169,6 +169,9 @@ function ExperimentDetail() {
               {meta?.report_scope && <ScopeBadge scope={meta.report_scope} />}
             </div>
             <p className="text-xs text-dash-text-muted mt-0.5 truncate max-w-[150px] md:max-w-none">{meta?.experiment_name}</p>
+            {expDescription && (
+              <p className="text-[11px] text-dash-text-faint mt-0.5 max-w-[600px] leading-relaxed hidden md:block">{expDescription}</p>
+            )}
           </div>
           {meta?.experiment_id && (
             <a
