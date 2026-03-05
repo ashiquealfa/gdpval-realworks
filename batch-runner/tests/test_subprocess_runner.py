@@ -1,11 +1,15 @@
 """Tests for core/subprocess_runner.py"""
 
+import platform
 import pytest
 from unittest.mock import Mock, MagicMock, patch
 from pathlib import Path
 
 from core.config import DEFAULT_TOKENS
 from core.subprocess_runner import SubprocessRunner
+
+
+# ── Fixtures ─────────────────────────────────────────────────────────────
 
 
 @pytest.fixture
@@ -120,9 +124,10 @@ print("Files created")
 
 def test_execute_safely_timeout(subprocess_runner):
     """Test execution timeout protection"""
+    subprocess_runner.timeout = 3  # Short timeout for testing
     code = """
 import time
-time.sleep(200)  # Exceeds 120s timeout
+time.sleep(200)  # Exceeds 3s test timeout
 """
     result = subprocess_runner._execute_safely(code)
 
@@ -238,3 +243,105 @@ with open("output.txt", "w") as f:
     assert result["success"] is True
     output_file = next(f for f in result["files"] if f["filename"] == "output.txt")
     assert b"Processed: Reference content" in output_file["content"]
+
+
+# ── Memory limit / OOM detection tests ───────────────────────────────────
+
+
+def test_memory_limit_config(monkeypatch):
+    """SUBPROCESS_MEMORY_GB env override should propagate to config."""
+    monkeypatch.setenv("SUBPROCESS_MEMORY_GB", "3")
+    # Re-import to pick up the new env
+    import importlib
+    import core.config as cfg_mod
+    importlib.reload(cfg_mod)
+    assert cfg_mod.SUBPROCESS_MEMORY_GB == 3
+    # Restore default
+    monkeypatch.delenv("SUBPROCESS_MEMORY_GB")
+    importlib.reload(cfg_mod)
+
+
+def test_oom_exit_code_minus9(subprocess_runner):
+    """Exit code -9 (SIGKILL) should return memory_error prefix."""
+    mock_result = Mock()
+    mock_result.returncode = -9
+    mock_result.stdout = "partial output"
+    mock_result.stderr = ""
+
+    with patch("subprocess.run", return_value=mock_result):
+        result = subprocess_runner._execute_safely("print('hi')")
+
+    assert result["success"] is False
+    assert result["error"].startswith("memory_error:")
+    assert "-9" in result["error"]
+
+
+def test_oom_exit_code_137(subprocess_runner):
+    """Exit code 137 (128+SIGKILL) should return memory_error prefix."""
+    mock_result = Mock()
+    mock_result.returncode = 137
+    mock_result.stdout = ""
+    mock_result.stderr = ""
+
+    with patch("subprocess.run", return_value=mock_result):
+        result = subprocess_runner._execute_safely("print('hi')")
+
+    assert result["success"] is False
+    assert result["error"].startswith("memory_error:")
+    assert "137" in result["error"]
+
+
+def test_oom_memory_error_in_stderr(subprocess_runner):
+    """MemoryError in stderr should return memory_error prefix."""
+    mock_result = Mock()
+    mock_result.returncode = 1
+    mock_result.stdout = ""
+    mock_result.stderr = "Traceback ...\nMemoryError: unable to allocate array"
+
+    with patch("subprocess.run", return_value=mock_result):
+        result = subprocess_runner._execute_safely("print('hi')")
+
+    assert result["success"] is False
+    assert result["error"].startswith("memory_error:")
+
+
+def test_oom_cannot_allocate_in_stderr(subprocess_runner):
+    """'Cannot allocate memory' in stderr should return memory_error prefix."""
+    mock_result = Mock()
+    mock_result.returncode = 1
+    mock_result.stdout = ""
+    mock_result.stderr = "OSError: [Errno 12] Cannot allocate memory"
+
+    with patch("subprocess.run", return_value=mock_result):
+        result = subprocess_runner._execute_safely("print('hi')")
+
+    assert result["success"] is False
+    assert result["error"].startswith("memory_error:")
+
+
+def test_generic_error_not_tagged_as_oom(subprocess_runner):
+    """Non-OOM failures should NOT have memory_error prefix."""
+    mock_result = Mock()
+    mock_result.returncode = 1
+    mock_result.stdout = ""
+    mock_result.stderr = "FileNotFoundError: No such file"
+
+    with patch("subprocess.run", return_value=mock_result):
+        result = subprocess_runner._execute_safely("print('hi')")
+
+    assert result["success"] is False
+    assert not result["error"].startswith("memory_error:")
+    assert "Code execution failed" in result["error"]
+
+
+def test_memory_limit_graceful_on_unsupported_os(subprocess_runner):
+    """_set_memory_limit should not raise on platforms without RLIMIT_AS (macOS)."""
+    result = subprocess_runner._execute_safely("print('hello')")
+    # preexec_fn should NOT cause failure on any platform
+    if platform.system() == "Darwin":
+        # macOS: RLIMIT_AS is a no-op, code executes normally
+        assert result["success"] is True
+        assert "preexec_fn" not in result.get("error", "")
+    else:
+        # Linux: RLIMIT_AS works, code also executes normally
+        assert result["success"] is True

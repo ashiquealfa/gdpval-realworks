@@ -116,6 +116,16 @@ condition_a:
         The standard `wave` module does NOT support WAVE_FORMAT_EXTENSIBLE (24-bit/48kHz) files.
       - For audio effects (reverb, delay, EQ), use `pedalboard`.
       - For loudness measurement (LUFS), use `pyloudnorm`.
+      - Memory-efficient audio processing (IMPORTANT):
+        * HARD LIMIT: Your process has a 5GB virtual memory cap. Exceeding it kills the process immediately.
+        * Before heavy DSP (time_stretch, pitch_shift, STFT), convert stereo to mono
+          if the task does not explicitly require stereo output: `y = librosa.to_mono(y)`
+        * For files longer than 30 seconds, prefer `soundfile` streaming or chunk-based
+          processing over loading the entire file into memory.
+        * Use `dtype='float32'` (not float64) when loading with soundfile: `sf.read(path, dtype='float32')`
+        * Prefer `pedalboard` for real-time-style effects — it is far more memory-efficient
+          than librosa's FFT-based equivalents (e.g., use `pedalboard.time_stretch()` over
+          `librosa.effects.time_stretch()`).
       - Documents: aspose-words, camelot-py, docx2txt, fpdf2, PyMuPDF, weasyprint, cairosvg
       - Data/ML: scikit-learn, xgboost, lightgbm, catboost, statsmodels, scipy, networkx
       - NLP: nltk, textblob, fuzzywuzzy, rapidfuzz, wordcloud

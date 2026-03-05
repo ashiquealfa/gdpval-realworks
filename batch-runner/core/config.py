@@ -111,6 +111,7 @@ PROMPT_PRESETS = {
 # ─── Batch Pipeline ───────────────────────────────────────────────────────
 
 SUBPROCESS_TIMEOUT = int(os.getenv("SUBPROCESS_TIMEOUT", "570"))  # subprocess mode: env override supported
+SUBPROCESS_MEMORY_GB = int(os.getenv("SUBPROCESS_MEMORY_GB", "5"))  # subprocess RLIMIT_AS in GB; env override supported
 
 # Azure AI 모델 (모두 AzureOpenAI SDK로 호출)
 SUPPORTED_MODELS = [

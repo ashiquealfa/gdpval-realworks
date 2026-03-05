@@ -21,7 +21,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from core.config import SUBPROCESS_TIMEOUT, DEFAULT_TOKENS
+from core.config import SUBPROCESS_TIMEOUT, SUBPROCESS_MEMORY_GB, DEFAULT_TOKENS
 from core.llm_client import complete
 from core.prompt_loader import load_prompt, render_prompt
 from core.file_preview import generate_all_previews, build_file_structure_info
@@ -290,8 +290,20 @@ class SubprocessRunner:
                 python_executable = sys.executable
 
                 def _set_memory_limit():
-                    """Limit subprocess memory to 2GB to prevent runner OOM."""
-                    resource.setrlimit(resource.RLIMIT_AS, (2 * 1024**3, 2 * 1024**3))
+                    """Limit subprocess virtual address space to prevent runner OOM.
+
+                    Default 5GB, configurable via SUBPROCESS_MEMORY_GB env var.
+                    GitHub Actions ubuntu-latest has 7GB RAM; parent process uses
+                    ~0.5-0.8GB, OS ~1-1.5GB, leaving ~4.7-5.5GB for the child.
+
+                    RLIMIT_AS is Linux-only. On macOS/Windows this is a no-op
+                    (memory runs uncapped on local dev machines).
+                    """
+                    try:
+                        limit_bytes = SUBPROCESS_MEMORY_GB * 1024**3
+                        resource.setrlimit(resource.RLIMIT_AS, (limit_bytes, limit_bytes))
+                    except (ValueError, OSError):
+                        pass  # RLIMIT_AS not available (macOS, Windows, etc.)
 
                 # Execute code with timeout
                 result = subprocess.run(
@@ -303,6 +315,27 @@ class SubprocessRunner:
                     timeout=self.timeout,
                     preexec_fn=_set_memory_limit,
                 )
+
+                # Check for OOM (killed by signal 9 or exit 137)
+                if result.returncode == -9 or result.returncode == 137:
+                    return {
+                        "success": False,
+                        "text": result.stdout,
+                        "files": [],
+                        "error": f"memory_error: process killed (exit code {result.returncode}, limit {SUBPROCESS_MEMORY_GB}GB)"
+                    }
+
+                # Check for MemoryError in stderr
+                if result.returncode != 0 and (
+                    "MemoryError" in result.stderr
+                    or "Cannot allocate memory" in result.stderr
+                ):
+                    return {
+                        "success": False,
+                        "text": result.stdout,
+                        "files": [],
+                        "error": f"memory_error: {result.stderr[-500:]}"
+                    }
 
                 # Check execution result
                 if result.returncode != 0:
