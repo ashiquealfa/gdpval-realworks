@@ -345,3 +345,66 @@ def test_memory_limit_graceful_on_unsupported_os(subprocess_runner):
     else:
         # Linux: RLIMIT_AS works, code also executes normally
         assert result["success"] is True
+
+
+# ── Denylist file collection tests ───────────────────────────────────────
+
+
+def test_collect_any_extension(subprocess_runner):
+    """Denylist approach should collect files of any extension."""
+    code = """
+with open("output.wav", "wb") as f:
+    f.write(b"RIFF" + b"\\x00" * 100)
+with open("result.fodp", "w") as f:
+    f.write("<xml>test</xml>")
+with open("notes.txt", "w") as f:
+    f.write("done")
+with open("data.npy", "wb") as f:
+    f.write(b"\\x93NUMPY" + b"\\x00" * 50)
+"""
+    result = subprocess_runner._execute_safely(code)
+    assert result["success"] is True
+    filenames = {f["filename"] for f in result["files"]}
+    assert "output.wav" in filenames
+    assert "result.fodp" in filenames
+    assert "notes.txt" in filenames
+    assert "data.npy" in filenames
+    # solution.py should NOT be collected
+    assert "solution.py" not in filenames
+
+
+def test_skip_reference_files(subprocess_runner, tmp_path):
+    """Reference input files should not appear in output."""
+    ref_file = tmp_path / "input_data.xlsx"
+    ref_file.write_bytes(b"fake excel")
+
+    code = """
+with open("report.pdf", "wb") as f:
+    f.write(b"%PDF-1.4 fake")
+"""
+    result = subprocess_runner._execute_safely(code, reference_files=[str(ref_file)])
+    assert result["success"] is True
+    filenames = {f["filename"] for f in result["files"]}
+    assert "report.pdf" in filenames
+    # Reference file should be excluded
+    assert "input_data.xlsx" not in filenames
+
+
+def test_skip_pycache(subprocess_runner):
+    """__pycache__ and .pyc files should not be collected."""
+    code = """
+import py_compile, os
+with open("helper.py", "w") as f:
+    f.write("x = 1")
+py_compile.compile("helper.py")
+with open("output.txt", "w") as f:
+    f.write("done")
+"""
+    result = subprocess_runner._execute_safely(code)
+    assert result["success"] is True
+    filenames = {f["filename"] for f in result["files"]}
+    assert "output.txt" in filenames
+    # .pyc should not be collected (it's in __pycache__/ dir anyway)
+    assert not any(f.endswith(".pyc") for f in filenames)
+    # solution.py excluded, but helper.py IS a generated file → collected
+    assert "helper.py" in filenames

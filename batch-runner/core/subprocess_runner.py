@@ -346,24 +346,29 @@ class SubprocessRunner:
                         "error": f"Code execution failed (exit code {result.returncode}):\n{result.stderr}"
                     }
 
-                # Collect generated files
+                # Collect generated files (denylist: exclude script + inputs + bytecode)
                 output_files = []
-                file_extensions = ['.pdf', '.docx', '.xlsx', '.pptx', '.png', '.jpg',
-                                   '.html', '.md', '.json', '.txt', '.zip', '.csv']
+                skip_names = {"solution.py"} | set(copied_files)
+                skip_suffixes = {".pyc"}
 
-                for ext in file_extensions:
-                    for file_path in Path(tmpdir).glob(f"*{ext}"):
-                        # Skip the solution script itself
-                        if file_path.name == "solution.py":
-                            continue
+                for file_path in Path(tmpdir).iterdir():
+                    # Skip directories (__pycache__, etc.)
+                    if file_path.is_dir():
+                        continue
+                    # Skip the solution script and reference input files
+                    if file_path.name in skip_names:
+                        continue
+                    # Skip Python bytecode
+                    if file_path.suffix in skip_suffixes:
+                        continue
 
-                        try:
-                            output_files.append({
-                                "filename": file_path.name,
-                                "content": file_path.read_bytes()
-                            })
-                        except Exception as e:
-                            print(f"Warning: Failed to read generated file {file_path}: {e}")
+                    try:
+                        output_files.append({
+                            "filename": file_path.name,
+                            "content": file_path.read_bytes()
+                        })
+                    except Exception as e:
+                        print(f"Warning: Failed to read generated file {file_path}: {e}")
 
                 return {
                     "success": True,
