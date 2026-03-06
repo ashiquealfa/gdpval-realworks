@@ -47,6 +47,16 @@ This repo automates the entire loop: **configure → run → collect → visuali
 
 > 🎯 One YAML file. One button click. Full experiment lifecycle.
 
+<p align="center">
+  <img src="docs/images/dashboard-leaderboard.png" alt="Leaderboard — experiment rankings, KPI cards, sector heatmap" width="720" />
+</p>
+<p align="center"><em>Live Dashboard — leaderboard, success rates, QA scores across experiments</em></p>
+
+<p align="center">
+  <img src="docs/images/dashboard-experiment-tasks.png" alt="Task Detail — real professional task with reference files and deliverables" width="480" />
+</p>
+<p align="center"><em>Task Detail — real-world task description, reference files, and generated deliverables</em></p>
+
 ---
 
 ## How It Works
@@ -244,10 +254,6 @@ Self-QA checks: Are all requirements met? Are files actually produced? Is the ou
 > **[→ Live Dashboard](https://hyeonsangjeon.github.io/gdpval-realworks/)**
 
 Interactive experiment analytics — leaderboard, sector heatmaps, error analysis, prompt architecture viewer.
-
-<p align="center">
-  <img src="docs/images/dashboard-leaderboard.png" alt="Leaderboard — KPI cards, experiment rankings, sector heatmap" width="720" />
-</p>
 
 | Feature | Description |
 |---------|-------------|
